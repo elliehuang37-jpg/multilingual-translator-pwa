@@ -387,6 +387,7 @@ table.simple tr:last-child td{border-bottom:none}
     <div class="nav-tab" onclick="switchTab('image')" data-tab="image"><i class="ti ti-camera"></i><span>圖片</span></div>
     <div class="nav-tab" onclick="switchTab('summary')" data-tab="summary"><i class="ti ti-notes"></i><span>摘要</span></div>
     <div class="nav-tab" onclick="switchTab('float')" data-tab="float"><i class="ti ti-layout-navbar"></i><span>懸浮</span></div>
+    <div class="nav-tab" onclick="switchTab('history')" data-tab="history"><i class="ti ti-history"></i><span>歷史</span></div>
     <div class="nav-tab" onclick="switchTab('settings')" data-tab="settings"><i class="ti ti-settings"></i><span>設定</span></div>
   </div>
 </div>
@@ -730,6 +731,26 @@ table.simple tr:last-child td{border-bottom:none}
   </div>
 </div>
 
+<!-- ═══ HISTORY ═══ -->
+<div id="panel-history" class="panel">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div class="card-header" style="margin:0"><div class="card-icon ci-slate"><i class="ti ti-history"></i></div><span class="card-label">翻譯歷史</span></div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-ghost" style="height:36px;font-size:12px;padding:0 12px" onclick="exportH()"><i class="ti ti-download"></i></button>
+        <button class="btn btn-rose" style="height:36px;font-size:12px;padding:0 12px" onclick="clearH()"><i class="ti ti-trash"></i></button>
+      </div>
+    </div>
+    <div class="search-wrap"><i class="ti ti-search"></i><input type="text" class="search-input" id="h-search" placeholder="搜尋翻譯記錄..." oninput="renderH()"></div>
+    <div class="filter-tabs">
+      <div class="filter-tab active" id="hf-all" onclick="setHF('all')">全部</div>
+      <div class="filter-tab" id="hf-fav" onclick="setHF('fav')">★ 收藏</div>
+    </div>
+    <div id="h-list"><p style="font-size:13px;color:var(--text3);text-align:center;padding:24px">尚無翻譯記錄</p></div>
+    <div id="h-count" class="status-text" style="justify-content:flex-end"></div>
+  </div>
+</div>
+
 <!-- ═══ SETTINGS ═══ -->
 <div id="panel-settings" class="panel">
   <div class="settings-section">
@@ -776,7 +797,8 @@ table.simple tr:last-child td{border-bottom:none}
   <div class="card" style="margin-top:0">
     <div class="card-header"><div class="card-icon ci-rose"><i class="ti ti-database"></i></div><span class="card-label">資料管理</span></div>
     <div class="btn-row">
-      <button class="btn btn-rose" onclick="if(confirm('確定清除所有記錄？')){H=[];showToast('已清除所有記錄')}"><i class="ti ti-trash"></i> 清除記錄</button>
+      <button class="btn btn-ghost" onclick="exportH()"><i class="ti ti-download"></i> 匯出歷史</button>
+      <button class="btn btn-rose" onclick="if(confirm('確定清除所有記錄？')){H=[];renderH();showToast('已清除所有記錄')}"><i class="ti ti-trash"></i> 清除記錄</button>
     </div>
   </div>
 </div>
@@ -789,7 +811,7 @@ table.simple tr:last-child td{border-bottom:none}
 <script>
 var H=[],vRec=null,isV=false,cRec=null,isCon=false,cWho=null,
     sRec=null,isS=false,sTxt='',
-    autoTmr=null,convoMsgs=[],curImg=null,fGlobal=false,
+    autoTmr=null,convoMsgs=[],curImg=null,fGlobal=false,hFilter='all',
     deferredPrompt=null;
 
 function gl(id){return document.getElementById(id)}
@@ -856,10 +878,11 @@ function addH(src,tgt,sl,tl){
 }
 
 function switchTab(name){
-  var tabs=['voice','convo','text','image','summary','float','settings'];
+  var tabs=['voice','convo','text','image','summary','float','history','settings'];
   document.querySelectorAll('.nav-tab').forEach((t,i)=>t.classList.toggle('active',tabs[i]===name));
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   var p=gl('panel-'+name);if(p)p.classList.add('active');
+  if(name==='history')renderH();
   var idx=tabs.indexOf(name);
   var nt=document.querySelectorAll('.nav-tab')[idx];
   if(nt)nt.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
@@ -1263,6 +1286,19 @@ function toggleFGlobal(){togEl('f-global');fGlobal=isOn('f-global');
   else{document.removeEventListener('mouseup',onFG);document.removeEventListener('touchend',onFG);setStatus('f-status','全域模式已關閉','player-stop')}
 }
 function onFG(){setTimeout(()=>{var s=window.getSelection?window.getSelection().toString():'';if(s&&s.trim().length>2)doFloat()},100)}
+
+/* HISTORY */
+function renderH(){
+  var q=(gl('h-search').value||'').toLowerCase();
+  var list=H.filter(h=>(hFilter!=='fav'||h.fav)&&(!q||(h.src+h.tgt).toLowerCase().includes(q)));
+  gl('h-count').textContent=list.length+' 筆記錄';
+  if(!list.length){gl('h-list').innerHTML='<p style="font-size:13px;color:var(--text3);text-align:center;padding:24px">無符合記錄</p>';return}
+  gl('h-list').innerHTML=list.map(h=>`<div class="h-item"><div style="display:flex;justify-content:space-between;align-items:center"><span class="h-tag"><i class="ti ti-language" style="font-size:11px"></i> ${h.sl} → ${h.tl}</span><div style="display:flex;align-items:center"><span style="font-size:11px;color:var(--text3)">${h.time}</span><button class="star ${h.fav?'on':''}" onclick="toggleFav(${h.id})" title="收藏"><i class="ti ti-star" style="font-size:16px"></i></button><button class="star" onclick="navigator.clipboard.writeText('${h.tgt.replace(/'/g,"\\'")}').then(()=>showToast('✓ 已複製'))" title="複製"><i class="ti ti-copy" style="font-size:15px"></i></button></div></div><div class="h-orig">${escH(h.src.substring(0,80))}</div><div class="h-trans">${escH(h.tgt.substring(0,80))}</div></div>`).join('');
+}
+function toggleFav(id){var h=H.find(x=>x.id===id);if(h){h.fav=!h.fav;renderH();showToast(h.fav?'★ 已加入收藏':'已取消收藏')}}
+function setHF(f){hFilter=f;['all','fav'].forEach(k=>{var e=gl('hf-'+k);if(e)e.classList.toggle('active',k===f)});renderH()}
+function clearH(){if(!confirm('確定清除所有記錄？'))return;H=[];renderH()}
+function exportH(){var txt=H.map(h=>h.time+' ['+h.sl+' → '+h.tl+']\n'+h.src+'\n→ '+h.tgt).join('\n\n');var a=document.createElement('a');a.href='data:text/plain;charset=utf-8,'+encodeURIComponent(txt);a.download='translation-history.txt';a.click()}
 
 /* PWA */
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;gl('install-banner').style.display='flex'});
