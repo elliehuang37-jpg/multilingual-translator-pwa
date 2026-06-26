@@ -385,10 +385,8 @@ table.simple tr:last-child td{border-bottom:none}
     <div class="nav-tab" onclick="switchTab('convo')" data-tab="convo"><i class="ti ti-messages"></i><span>對話</span></div>
     <div class="nav-tab" onclick="switchTab('text')" data-tab="text"><i class="ti ti-keyboard"></i><span>打字</span></div>
     <div class="nav-tab" onclick="switchTab('image')" data-tab="image"><i class="ti ti-camera"></i><span>圖片</span></div>
-    <div class="nav-tab" onclick="switchTab('transcribe')" data-tab="transcribe"><i class="ti ti-file-text"></i><span>轉寫</span></div>
     <div class="nav-tab" onclick="switchTab('summary')" data-tab="summary"><i class="ti ti-notes"></i><span>摘要</span></div>
     <div class="nav-tab" onclick="switchTab('float')" data-tab="float"><i class="ti ti-layout-navbar"></i><span>懸浮</span></div>
-    <div class="nav-tab" onclick="switchTab('history')" data-tab="history"><i class="ti ti-history"></i><span>歷史</span></div>
     <div class="nav-tab" onclick="switchTab('settings')" data-tab="settings"><i class="ti ti-settings"></i><span>設定</span></div>
   </div>
 </div>
@@ -423,34 +421,23 @@ table.simple tr:last-child td{border-bottom:none}
     </div>
   </div>
 
+  <!-- 上方：即時語音逐字文字 -->
   <div class="card">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
       <div class="card-header" style="margin:0">
-        <div class="card-icon ci-teal"><i class="ti ti-notebook"></i></div>
-        <span class="card-label">即時逐字稿</span>
-      </div>
-      <div style="display:flex;gap:6px">
-        <button class="btn btn-ghost btn-icon" onclick="copyTranscript()" title="複製全文"><i class="ti ti-copy"></i></button>
-        <button class="btn btn-ghost btn-icon" onclick="dlTranscript()" title="匯出 .txt"><i class="ti ti-download"></i></button>
-        <button class="btn btn-rose btn-icon" onclick="clearV()" title="清除"><i class="ti ti-trash"></i></button>
+        <div class="card-icon ci-slate"><i class="ti ti-microphone"></i></div>
+        <span class="card-label">即時語音逐字文字</span>
       </div>
     </div>
-
-    <!-- 即時偵測中的文字（半透明預覽） -->
     <div id="v-interim" style="min-height:28px;padding:6px 10px;font-size:13px;color:var(--text3);font-style:italic;background:var(--bg2);border-radius:var(--radius-sm);margin-bottom:8px">聆聽中的文字將在此預覽...</div>
-
-    <!-- 逐字稿捲動區 -->
-    <div id="v-transcript" style="height:320px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:4px 0;-webkit-overflow-scrolling:touch">
-      <div id="v-empty" style="text-align:center;color:var(--text3);font-size:13px;padding:60px 0">
-        <i class="ti ti-microphone-off" style="font-size:32px;display:block;margin-bottom:8px;opacity:.4"></i>
-        按下「開始聆聽」後，每句翻譯將逐行顯示<br>
-        <span style="font-size:11px;margin-top:4px;display:block">適合會議、課程、演講同步翻譯</span>
+    <div id="v-orig-area" style="height:190px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding:4px 0;-webkit-overflow-scrolling:touch">
+      <div id="v-orig-empty" style="text-align:center;color:var(--text3);font-size:13px;padding:44px 0">
+        <i class="ti ti-microphone-off" style="font-size:28px;display:block;margin-bottom:8px;opacity:.4"></i>
+        按下「開始聆聽」後，語音原文將逐行顯示
       </div>
     </div>
-
     <div class="conf-wrap" style="margin:8px 0 4px"><div class="conf-bar" id="v-conf"></div></div>
     <div id="v-wave" class="wave" style="display:none"><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><span class="wave-lbl">聆聽中...</span></div>
-
     <!-- 同聲傳譯開關 -->
     <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 2px;border-top:1px solid var(--border);margin-top:8px">
       <div>
@@ -459,15 +446,12 @@ table.simple tr:last-child td{border-bottom:none}
       </div>
       <div class="toggle" id="v-si-toggle" onclick="togEl('v-si-toggle')"></div>
     </div>
-    <!-- TTS 語速（同聲傳譯用） -->
-    <div id="v-si-speed-row" style="display:flex;align-items:center;gap:8px;padding:6px 2px;display:none">
+    <div id="v-si-speed-row" style="display:none;align-items:center;gap:8px;padding:6px 2px">
       <span style="font-size:12px;color:var(--text3);white-space:nowrap">朗讀語速</span>
       <input type="range" min="0.8" max="1.8" step="0.1" value="1.2" id="v-si-speed" style="flex:1;accent-color:var(--gold)"
         oninput="gl('v-si-spd').textContent=parseFloat(this.value).toFixed(1)+'x'">
       <span style="font-size:12px;font-weight:700;color:var(--gold-dark);min-width:32px" id="v-si-spd">1.2x</span>
     </div>
-
-    <!-- 控制列 -->
     <div class="btn-row" style="margin-top:10px">
       <button class="btn btn-record" style="flex:1;justify-content:center" id="v-btn" onclick="toggleVoice()">
         <i class="ti ti-microphone"></i> 開始聆聽
@@ -477,17 +461,25 @@ table.simple tr:last-child td{border-bottom:none}
     <div id="v-status" class="status-text"></div>
   </div>
 
+  <!-- 下方：即時轉譯文字 -->
   <div class="card">
-    <div class="card-header"><div class="card-icon ci-teal"><i class="ti ti-bolt"></i></div><span class="card-label">快速切換</span></div>
-    <div class="preset-wrap">
-      <span class="preset" onclick="setPreset('v-src','v-tgt','zh-TW','en-US')">🇹🇼 中→英 🇺🇸</span>
-      <span class="preset" onclick="setPreset('v-src','v-tgt','en-US','zh-TW')">🇺🇸 英→中 🇹🇼</span>
-      <span class="preset" onclick="setPreset('v-src','v-tgt','ja-JP','zh-TW')">🇯🇵 日→中 🇹🇼</span>
-      <span class="preset" onclick="setPreset('v-src','v-tgt','ko-KR','zh-TW')">🇰🇷 韓→中 🇹🇼</span>
-      <span class="preset" onclick="setPreset('v-src','v-tgt','zh-TW','ja-JP')">🇹🇼 中→日 🇯🇵</span>
-      <span class="preset" onclick="setPreset('v-src','v-tgt','zh-TW','ko-KR')">🇹🇼 中→韓 🇰🇷</span>
-      <span class="preset" onclick="setPreset('v-src','v-tgt','fr-FR','zh-TW')">🇫🇷 法→中 🇹🇼</span>
-      <span class="preset" onclick="setPreset('v-src','v-tgt','de-DE','zh-TW')">🇩🇪 德→中 🇹🇼</span>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div class="card-header" style="margin:0">
+        <div class="card-icon ci-teal"><i class="ti ti-language"></i></div>
+        <span class="card-label">即時轉譯文字</span>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-ghost btn-icon" onclick="copyTranscript()" title="複製全文"><i class="ti ti-copy"></i></button>
+        <button class="btn btn-ghost btn-icon" onclick="dlTranscript()" title="匯出 .txt"><i class="ti ti-download"></i></button>
+        <button class="btn btn-rose btn-icon" onclick="clearV()" title="清除"><i class="ti ti-trash"></i></button>
+      </div>
+    </div>
+    <div id="v-trans-area" style="height:230px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding:4px 0;-webkit-overflow-scrolling:touch">
+      <div id="v-trans-empty" style="text-align:center;color:var(--text3);font-size:13px;padding:56px 0">
+        <i class="ti ti-language" style="font-size:28px;display:block;margin-bottom:8px;opacity:.4"></i>
+        翻譯結果將在此顯示<br>
+        <span style="font-size:11px;margin-top:4px;display:block">適合會議、課程、演講同步翻譯</span>
+      </div>
     </div>
   </div>
 </div>
@@ -653,50 +645,6 @@ table.simple tr:last-child td{border-bottom:none}
   </div>
 </div>
 
-<!-- ═══ TRANSCRIBE ═══ -->
-<div id="panel-transcribe" class="panel">
-  <div class="card">
-    <div class="card-header"><div class="card-icon ci-burgundy"><i class="ti ti-microphone-2"></i></div><span class="card-label">錄音轉寫</span></div>
-    <div class="lang-row" style="margin-bottom:10px">
-      <span style="font-size:13px;color:var(--text2);font-weight:500;flex-shrink:0">說話語言</span>
-      <select class="lang-sel" id="tr-lang">
-        <option value="zh-TW">🇹🇼 中文（繁體）</option><option value="zh-CN">🇨🇳 中文（簡體）</option>
-        <option value="en-US" selected>🇺🇸 English</option><option value="ja-JP">🇯🇵 日本語</option>
-        <option value="ko-KR">🇰🇷 한국어</option><option value="fr-FR">🇫🇷 Français</option>
-        <option value="de-DE">🇩🇪 Deutsch</option>
-      </select>
-    </div>
-    <div id="tr-wave" class="wave" style="display:none"><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><span class="wave-lbl">錄音轉寫中...</span></div>
-    <textarea id="tr-result" rows="8" placeholder="轉寫文字將在此顯示，邊說邊出現..." style="font-size:14px"></textarea>
-    <div style="display:flex;justify-content:space-between;margin:6px 0">
-      <span id="tr-words" class="char-count"><i class="ti ti-text-size" style="font-size:13px;vertical-align:-2px"></i> 0 字</span>
-      <span id="tr-time" style="font-size:13px;font-weight:700;color:var(--burgundy);font-variant-numeric:tabular-nums">00:00</span>
-    </div>
-    <div class="btn-row">
-      <button class="btn btn-record" style="flex:1;justify-content:center" id="tr-btn" onclick="toggleTr()"><i class="ti ti-record-mail"></i> 開始錄音轉寫</button>
-    </div>
-    <div class="btn-row">
-      <button class="btn btn-ghost" onclick="copyEl('tr-result',true)"><i class="ti ti-copy"></i> 複製全文</button>
-      <button class="btn btn-ghost" onclick="dlTxt('tr-result','transcription.txt',true)"><i class="ti ti-download"></i> 匯出 .txt</button>
-      <button class="btn btn-rose btn-icon" onclick="gl('tr-result').value='';gl('tr-words').textContent='0 字'"><i class="ti ti-trash"></i></button>
-    </div>
-    <div id="tr-status" class="status-text"><i class="ti ti-info-circle"></i> 邊說邊顯示，停止後可匯出</div>
-  </div>
-
-  <div class="card">
-    <div class="card-header"><div class="card-icon ci-teal"><i class="ti ti-transfer"></i></div><span class="card-label">轉寫後自動翻譯</span></div>
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-      <div class="toggle" id="tr-auto-tog" onclick="togEl('tr-auto-tog')"></div>
-      <span style="font-size:13px;color:var(--text2)">自動翻譯到</span>
-      <select class="lang-sel" id="tr-tgt" style="flex:1;height:38px;font-size:13px">
-        <option value="zh-TW" selected>🇹🇼 中文（繁）</option>
-        <option value="en-US">🇺🇸 English</option><option value="ja-JP">🇯🇵 日本語</option>
-      </select>
-    </div>
-    <div id="tr-trans" class="result-box" style="display:none;min-height:40px"></div>
-  </div>
-</div>
-
 <!-- ═══ SUMMARY ═══ -->
 <div id="panel-summary" class="panel">
   <div class="card">
@@ -782,26 +730,6 @@ table.simple tr:last-child td{border-bottom:none}
   </div>
 </div>
 
-<!-- ═══ HISTORY ═══ -->
-<div id="panel-history" class="panel">
-  <div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-      <div class="card-header" style="margin:0"><div class="card-icon ci-slate"><i class="ti ti-history"></i></div><span class="card-label">翻譯歷史</span></div>
-      <div style="display:flex;gap:6px">
-        <button class="btn btn-ghost" style="height:36px;font-size:12px;padding:0 12px" onclick="exportH()"><i class="ti ti-download"></i></button>
-        <button class="btn btn-rose" style="height:36px;font-size:12px;padding:0 12px" onclick="clearH()"><i class="ti ti-trash"></i></button>
-      </div>
-    </div>
-    <div class="search-wrap"><i class="ti ti-search"></i><input type="text" class="search-input" id="h-search" placeholder="搜尋翻譯記錄..." oninput="renderH()"></div>
-    <div class="filter-tabs">
-      <div class="filter-tab active" id="hf-all" onclick="setHF('all')">全部</div>
-      <div class="filter-tab" id="hf-fav" onclick="setHF('fav')">★ 收藏</div>
-    </div>
-    <div id="h-list"><p style="font-size:13px;color:var(--text3);text-align:center;padding:24px">尚無翻譯記錄</p></div>
-    <div id="h-count" class="status-text" style="justify-content:flex-end"></div>
-  </div>
-</div>
-
 <!-- ═══ SETTINGS ═══ -->
 <div id="panel-settings" class="panel">
   <div class="settings-section">
@@ -848,8 +776,7 @@ table.simple tr:last-child td{border-bottom:none}
   <div class="card" style="margin-top:0">
     <div class="card-header"><div class="card-icon ci-rose"><i class="ti ti-database"></i></div><span class="card-label">資料管理</span></div>
     <div class="btn-row">
-      <button class="btn btn-ghost" onclick="exportH()"><i class="ti ti-download"></i> 匯出歷史</button>
-      <button class="btn btn-rose" onclick="if(confirm('確定清除所有記錄？')){H=[];renderH();showToast('已清除所有記錄')}"><i class="ti ti-trash"></i> 清除記錄</button>
+      <button class="btn btn-rose" onclick="if(confirm('確定清除所有記錄？')){H=[];showToast('已清除所有記錄')}"><i class="ti ti-trash"></i> 清除記錄</button>
     </div>
   </div>
 </div>
@@ -861,9 +788,8 @@ table.simple tr:last-child td{border-bottom:none}
 
 <script>
 var H=[],vRec=null,isV=false,cRec=null,isCon=false,cWho=null,
-    trRec=null,isTr=false,trTmr=null,trSec=0,
     sRec=null,isS=false,sTxt='',
-    autoTmr=null,convoMsgs=[],curImg=null,fGlobal=false,hFilter='all',
+    autoTmr=null,convoMsgs=[],curImg=null,fGlobal=false,
     deferredPrompt=null;
 
 function gl(id){return document.getElementById(id)}
@@ -930,11 +856,10 @@ function addH(src,tgt,sl,tl){
 }
 
 function switchTab(name){
-  var tabs=['voice','convo','text','image','transcribe','summary','float','history','settings'];
+  var tabs=['voice','convo','text','image','summary','float','settings'];
   document.querySelectorAll('.nav-tab').forEach((t,i)=>t.classList.toggle('active',tabs[i]===name));
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   var p=gl('panel-'+name);if(p)p.classList.add('active');
-  if(name==='history')renderH();
   var idx=tabs.indexOf(name);
   var nt=document.querySelectorAll('.nav-tab')[idx];
   if(nt)nt.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
@@ -984,7 +909,8 @@ function startVRec(){
     setStatus('v-status','持續聆聽中，說話即翻譯...','ear');
     setGlobal('聆聽中',true);
     // 隱藏空狀態提示
-    var empty=gl('v-empty');if(empty)empty.style.display='none';
+    var oe=gl('v-orig-empty');if(oe)oe.style.display='none';
+    var te=gl('v-trans-empty');if(te)te.style.display='none';
   };
   vRec.onresult=e=>{
     var interim='',fin='';
@@ -1016,15 +942,25 @@ function startVRec(){
 }
 
 function addVLine(orig,trans){
-  var area=gl('v-transcript');
   var time=new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  var row=document.createElement('div');
-  row.style.cssText='border-left:3px solid var(--gold);padding:8px 12px;border-radius:0 var(--radius-sm) var(--radius-sm) 0;background:var(--bg2)';
-  row.innerHTML='<div style="font-size:11px;color:var(--text3);margin-bottom:3px">'+time+'</div>'+
-    '<div style="font-size:13px;color:var(--text2);margin-bottom:4px">'+escH(orig)+'</div>'+
+  // 原文區
+  var origArea=gl('v-orig-area');
+  var oe=gl('v-orig-empty');if(oe)oe.style.display='none';
+  var origRow=document.createElement('div');
+  origRow.style.cssText='border-left:3px solid var(--slate);padding:6px 10px;border-radius:0 var(--radius-sm) var(--radius-sm) 0;background:var(--bg2)';
+  origRow.innerHTML='<div style="font-size:11px;color:var(--text3);margin-bottom:2px">'+time+'</div>'+
+    '<div style="font-size:14px;color:var(--text)">'+escH(orig)+'</div>';
+  origArea.appendChild(origRow);
+  origArea.scrollTop=origArea.scrollHeight;
+  // 翻譯區
+  var transArea=gl('v-trans-area');
+  var te=gl('v-trans-empty');if(te)te.style.display='none';
+  var transRow=document.createElement('div');
+  transRow.style.cssText='border-left:3px solid var(--gold);padding:6px 10px;border-radius:0 var(--radius-sm) var(--radius-sm) 0;background:var(--bg2)';
+  transRow.innerHTML='<div style="font-size:11px;color:var(--text3);margin-bottom:2px">'+time+'</div>'+
     '<div style="font-size:15px;font-weight:600;color:var(--text)">'+escH(trans)+'</div>';
-  area.appendChild(row);
-  area.scrollTop=area.scrollHeight;
+  transArea.appendChild(transRow);
+  transArea.scrollTop=transArea.scrollHeight;
   vTranscript.push({time,orig,trans});
   if(isOn('cfg-hist'))addH(orig,trans,gl('v-src').value,gl('v-tgt').value);
   // 同聲傳譯：開啟時自動念翻譯結果
@@ -1033,7 +969,7 @@ function addVLine(orig,trans){
     var u=new SpeechSynthesisUtterance(trans);
     u.lang=gl('v-tgt').value;
     u.rate=spd;
-    speechSynthesis.speak(u); // 自動排隊，不中斷上一句
+    speechSynthesis.speak(u);
   }
 }
 
@@ -1083,8 +1019,8 @@ function stopV(){
 
 function clearV(){
   vTranscript=[];
-  var area=gl('v-transcript');
-  area.innerHTML='<div id="v-empty" style="text-align:center;color:var(--text3);font-size:13px;padding:60px 0"><i class="ti ti-microphone-off" style="font-size:32px;display:block;margin-bottom:8px;opacity:.4"></i>按下「開始聆聽」後，每句翻譯將逐行顯示<br><span style="font-size:11px;margin-top:4px;display:block">適合會議、課程、演講同步翻譯</span></div>';
+  gl('v-orig-area').innerHTML='<div id="v-orig-empty" style="text-align:center;color:var(--text3);font-size:13px;padding:44px 0"><i class="ti ti-microphone-off" style="font-size:28px;display:block;margin-bottom:8px;opacity:.4"></i>按下「開始聆聽」後，語音原文將逐行顯示</div>';
+  gl('v-trans-area').innerHTML='<div id="v-trans-empty" style="text-align:center;color:var(--text3);font-size:13px;padding:56px 0"><i class="ti ti-language" style="font-size:28px;display:block;margin-bottom:8px;opacity:.4"></i>翻譯結果將在此顯示<br><span style="font-size:11px;margin-top:4px;display:block">適合會議、課程、演講同步翻譯</span></div>';
   gl('v-interim').textContent='聆聽中的文字將在此預覽...';
   gl('v-conf').style.width='0%';
   setStatus('v-status','','');
@@ -1272,35 +1208,6 @@ function runOCR(){
     }).catch(()=>{gl('ocr-prog').style.display='none';setStatus('i-status','OCR 失敗，請重試','alert-circle')});
 }
 
-/* TRANSCRIBE */
-function toggleTr(){
-  if(isTr){stopTr();return}
-  var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){setStatus('tr-status','請使用 Chrome','alert-circle');return}
-  var httpsErr=checkHttps();
-  if(httpsErr){showToast('⚠ '+httpsErr);setStatus('tr-status',httpsErr,'alert-circle');return}
-  var trErr=false;
-  trRec=new SR();trRec.lang=gl('tr-lang').value;trRec.continuous=true;trRec.interimResults=true;
-  trSec=0;trTmr=setInterval(()=>{trSec++;gl('tr-time').textContent=pad(Math.floor(trSec/60))+':'+pad(trSec%60)},1000);
-  trRec.onstart=()=>{isTr=true;gl('tr-btn').innerHTML='<i class="ti ti-square"></i> 停止錄音';gl('tr-btn').className='btn btn-stop btn-full recording';gl('tr-wave').style.display='flex';setStatus('tr-status','錄音轉寫中...','microphone')};
-  trRec.onresult=e=>{
-    var full='';for(var i=0;i<e.results.length;i++)full+=e.results[i][0].transcript+(e.results[i].isFinal?'\n':'');
-    gl('tr-result').value=full;gl('tr-words').innerHTML='<i class="ti ti-text-size" style="font-size:13px;vertical-align:-2px"></i> '+full.replace(/\s+/g,'').length+' 字';
-    if(isOn('tr-auto-tog')&&e.results[e.resultIndex]&&e.results[e.resultIndex].isFinal){
-      txAPI(e.results[e.resultIndex][0].transcript,gl('tr-lang').value,gl('tr-tgt').value,r=>{var el=gl('tr-trans');el.style.display='block';el.textContent=(el.textContent||'')+r+'\n'});
-    }
-  };
-  trRec.onerror=e=>{trErr=true;setStatus('tr-status',srErrMsg(e.error),'alert-circle');stopTr()};
-  trRec.onend=()=>{if(isTr&&!trErr)trRec.start()};trRec.start();
-}
-function stopTr(){
-  isTr=false;if(trRec)trRec.stop();clearInterval(trTmr);
-  gl('tr-btn').innerHTML='<i class="ti ti-record-mail"></i> 開始錄音轉寫';
-  gl('tr-btn').className='btn btn-record btn-full';
-  gl('tr-btn').classList.remove('recording');
-  gl('tr-wave').style.display='none';setStatus('tr-status','錄音完成','check');
-}
-
 /* SUMMARY */
 function toggleSRec(){
   if(isS){stopSR();return}
@@ -1356,19 +1263,6 @@ function toggleFGlobal(){togEl('f-global');fGlobal=isOn('f-global');
   else{document.removeEventListener('mouseup',onFG);document.removeEventListener('touchend',onFG);setStatus('f-status','全域模式已關閉','player-stop')}
 }
 function onFG(){setTimeout(()=>{var s=window.getSelection?window.getSelection().toString():'';if(s&&s.trim().length>2)doFloat()},100)}
-
-/* HISTORY */
-function renderH(){
-  var q=(gl('h-search').value||'').toLowerCase();
-  var list=H.filter(h=>(hFilter!=='fav'||h.fav)&&(!q||(h.src+h.tgt).toLowerCase().includes(q)));
-  gl('h-count').textContent=list.length+' 筆記錄';
-  if(!list.length){gl('h-list').innerHTML='<p style="font-size:13px;color:var(--text3);text-align:center;padding:24px">無符合記錄</p>';return}
-  gl('h-list').innerHTML=list.map(h=>`<div class="h-item"><div style="display:flex;justify-content:space-between;align-items:center"><span class="h-tag"><i class="ti ti-language" style="font-size:11px"></i> ${h.sl} → ${h.tl}</span><div style="display:flex;align-items:center"><span style="font-size:11px;color:var(--text3)">${h.time}</span><button class="star ${h.fav?'on':''}" onclick="toggleFav(${h.id})" title="收藏"><i class="ti ti-star" style="font-size:16px"></i></button><button class="star" onclick="navigator.clipboard.writeText('${h.tgt.replace(/'/g,"\\'")}').then(()=>showToast('✓ 已複製'))" title="複製"><i class="ti ti-copy" style="font-size:15px"></i></button></div></div><div class="h-orig">${escH(h.src.substring(0,80))}</div><div class="h-trans">${escH(h.tgt.substring(0,80))}</div></div>`).join('');
-}
-function toggleFav(id){var h=H.find(x=>x.id===id);if(h){h.fav=!h.fav;renderH();showToast(h.fav?'★ 已加入收藏':'已取消收藏')}}
-function setHF(f){hFilter=f;['all','fav'].forEach(k=>{var e=gl('hf-'+k);if(e)e.classList.toggle('active',k===f)});renderH()}
-function clearH(){if(!confirm('確定清除所有記錄？'))return;H=[];renderH()}
-function exportH(){var txt=H.map(h=>h.time+' ['+h.sl+' → '+h.tl+']\n'+h.src+'\n→ '+h.tgt).join('\n\n');var a=document.createElement('a');a.href='data:text/plain;charset=utf-8,'+encodeURIComponent(txt);a.download='translation-history.txt';a.click()}
 
 /* PWA */
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;gl('install-banner').style.display='flex'});
