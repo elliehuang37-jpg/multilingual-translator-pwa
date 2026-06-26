@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#378ADD">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="翻譯機">
+<meta name="description" content="多國語言即時同步翻譯 — 語音、圖片、打字、對話、摘要">
+<title>即時同步翻譯機</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<style>
+:root{
+  --primary:#378ADD;--primary-light:#E6F1FB;--primary-dark:#185FA5;
+  --success:#3B6D11;--success-light:#EAF3DE;
+  --warning:#BA7517;--warning-light:#FAEEDA;
+  --danger:#A32D2D;--danger-light:#FCEBEB;
+  --bg:#ffffff;--bg2:#f7f8fa;--bg3:#f0f2f5;
+  --text:#1a1a1a;--text2:#5f6368;--text3:#9aa0a6;
+  --border:#e0e3e8;--border2:#c8cdd4;
+  --radius:10px;--radius-sm:6px;--radius-lg:14px;
+  --shadow:0 2px 12px rgba(0,0,0,.08);
+  --font:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#1c1c1e;--bg2:#2c2c2e;--bg3:#3a3a3c;
+    --text:#f2f2f7;--text2:#aeaeb2;--text3:#636366;
+    --border:#3a3a3c;--border2:#48484a;
+    --primary-light:#0c3454;--success-light:#1a2e0a;
+    --warning-light:#3d2b00;--danger-light:#3d0f0f;
+    --shadow:0 2px 12px rgba(0,0,0,.3);
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--text);font-size:15px;line-height:1.5}
+body{display:flex;flex-direction:column;max-width:600px;margin:0 auto;position:relative}
+
+/* TOP BAR */
+.topbar{display:flex;align-items:center;padding:14px 16px 8px;gap:10px;background:var(--bg);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+.logo{width:36px;height:36px;border-radius:10px;background:var(--primary);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo i{font-size:20px;color:#fff}
+.topbar-title{flex:1}
+.topbar-title h1{font-size:17px;font-weight:600;color:var(--text)}
+.topbar-title p{font-size:11px;color:var(--text2)}
+.topbar-actions{display:flex;gap:6px}
+.icon-btn{width:36px;height:36px;border-radius:50%;border:1px solid var(--border);background:var(--bg2);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);font-size:16px;transition:all .15s}
+.icon-btn:hover,.icon-btn:active{background:var(--bg3);color:var(--primary)}
+
+/* STATUS PILL */
+.status-pill{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;font-size:11px;background:var(--bg2);color:var(--text2);border:1px solid var(--border)}
+.status-pill.ok{background:var(--success-light);color:var(--success);border-color:transparent}
+.status-pill.active{background:var(--primary-light);color:var(--primary-dark);border-color:transparent}
+
+/* NAV TABS */
+.nav{display:flex;overflow-x:auto;gap:0;background:var(--bg);border-bottom:1px solid var(--border);padding:0 8px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.nav::-webkit-scrollbar{display:none}
+.nav-tab{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 12px;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;white-space:nowrap;flex-shrink:0;transition:all .15s;font-size:11px;-webkit-user-select:none;user-select:none}
+.nav-tab i{font-size:20px}
+.nav-tab.active{color:var(--primary);border-bottom-color:var(--primary)}
+.nav-tab:hover:not(.active){color:var(--text)}
+
+/* MAIN SCROLL */
+.main{flex:1;overflow-y:auto;padding:16px;-webkit-overflow-scrolling:touch}
+.panel{display:none;animation:fadeIn .18s ease}
+.panel.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+/* CARDS */
+.card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:12px;box-shadow:var(--shadow)}
+.card-title{font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
+
+/* LANG ROW */
+.lang-row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+select{flex:1;height:40px;padding:0 10px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--bg2);color:var(--text);font-size:14px;font-family:var(--font);cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239aa0a6' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center}
+select:focus{outline:none;border-color:var(--primary)}
+.swap-btn{width:36px;height:36px;flex-shrink:0;border:1px solid var(--border2);border-radius:50%;background:var(--bg2);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text2);font-size:16px;transition:all .15s}
+.swap-btn:active{transform:rotate(180deg);background:var(--primary-light);color:var(--primary)}
+
+/* TEXTAREA / RESULT */
+textarea{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg2);color:var(--text);font-size:15px;resize:none;font-family:var(--font);line-height:1.6;transition:border .15s}
+textarea:focus{outline:none;border-color:var(--primary)}
+.result-box{min-height:80px;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg2);color:var(--text);font-size:15px;line-height:1.6;white-space:pre-wrap;word-break:break-word;position:relative}
+.result-box.translating{color:var(--text3);font-style:italic}
+.result-placeholder{color:var(--text3);font-style:italic}
+.char-count{font-size:11px;color:var(--text3);text-align:right;margin-top:3px}
+
+/* BUTTONS */
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.btn{height:38px;padding:0 14px;border-radius:var(--radius);cursor:pointer;font-size:14px;font-family:var(--font);display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border2);background:var(--bg2);color:var(--text);transition:all .15s;white-space:nowrap;-webkit-user-select:none;user-select:none}
+.btn:hover{background:var(--bg3)}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+.btn.primary:hover{background:var(--primary-dark);border-color:var(--primary-dark)}
+.btn.success{background:var(--success-light);color:var(--success);border-color:transparent}
+.btn.danger{background:var(--danger-light);color:var(--danger);border-color:transparent}
+.btn.warn{background:var(--warning-light);color:var(--warning);border-color:transparent}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-full{width:100%;justify-content:center}
+
+/* RECORDING ANIMATION */
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.recording{animation:pulse 1.2s infinite}
+
+/* WAVE */
+.wave{display:flex;align-items:center;gap:3px;height:28px;padding:4px 0}
+.wave-bar{width:4px;border-radius:2px;background:var(--primary);animation:wave 1s ease-in-out infinite}
+.wave-bar:nth-child(2){animation-delay:.12s}
+.wave-bar:nth-child(3){animation-delay:.24s}
+.wave-bar:nth-child(4){animation-delay:.36s}
+.wave-bar:nth-child(5){animation-delay:.48s}
+@keyframes wave{0%,100%{height:4px}50%{height:20px}}
+
+/* CONFIDENCE BAR */
+.conf-wrap{height:4px;border-radius:2px;background:var(--border);margin:6px 0;overflow:hidden}
+.conf-bar{height:100%;background:var(--primary);border-radius:2px;width:0;transition:width .3s}
+
+/* STATUS TEXT */
+.status-text{font-size:12px;color:var(--text2);margin-top:6px;min-height:18px}
+
+/* DIVIDER */
+.divider{border:none;border-top:1px solid var(--border);margin:12px 0}
+
+/* TOGGLE */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
+.toggle-row:last-child{border-bottom:none}
+.toggle-info h3{font-size:14px;color:var(--text);font-weight:500}
+.toggle-info p{font-size:12px;color:var(--text2)}
+.toggle{width:44px;height:26px;border-radius:13px;background:var(--border2);cursor:pointer;position:relative;transition:background .2s;flex-shrink:0}
+.toggle.on{background:var(--primary)}
+.toggle::after{content:'';position:absolute;width:20px;height:20px;border-radius:50%;background:#fff;top:3px;left:3px;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.toggle.on::after{left:21px}
+
+/* CHAT */
+.chat-area{height:280px;overflow-y:auto;padding:10px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);display:flex;flex-direction:column;gap:10px;-webkit-overflow-scrolling:touch}
+.msg{max-width:80%;padding:8px 12px;border-radius:14px;font-size:14px;line-height:1.5}
+.msg.a{background:var(--primary-light);color:var(--primary-dark);align-self:flex-start;border-bottom-left-radius:4px}
+.msg.b{background:var(--success-light);color:var(--success);align-self:flex-end;border-bottom-right-radius:4px}
+.msg-meta{font-size:10px;opacity:.7;margin-bottom:3px;font-weight:600}
+.msg-trans{font-size:12px;opacity:.85;margin-top:4px;padding-top:4px;border-top:1px solid rgba(0,0,0,.08)}
+
+/* SPEAKER GRID */
+.spk-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.spk-card{border:1px solid var(--border);border-radius:var(--radius);padding:12px;text-align:center;background:var(--bg2)}
+.spk-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;margin:0 auto 8px;color:#fff}
+.spk-avatar.a{background:var(--primary)}
+.spk-avatar.b{background:var(--success)}
+
+/* IMAGE DROP */
+.img-drop{border:2px dashed var(--border2);border-radius:var(--radius);padding:24px;text-align:center;cursor:pointer;background:var(--bg2);transition:all .2s}
+.img-drop:hover,.img-drop.dragover{border-color:var(--primary);background:var(--primary-light)}
+.img-drop i{font-size:36px;color:var(--text3);display:block;margin-bottom:8px}
+.img-drop p{font-size:13px;color:var(--text2)}
+#img-preview{max-width:100%;max-height:200px;object-fit:contain;border-radius:var(--radius);margin:8px 0;display:none}
+.ocr-prog{height:6px;border-radius:3px;background:var(--border);margin:8px 0;overflow:hidden;display:none}
+.ocr-fill{height:100%;background:var(--primary);border-radius:3px;width:0;transition:width .3s}
+
+/* METRICS */
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.metric{background:var(--bg2);border-radius:var(--radius);padding:10px;text-align:center;border:1px solid var(--border)}
+.metric .num{font-size:22px;font-weight:600;color:var(--text)}
+.metric .lbl{font-size:11px;color:var(--text2);margin-top:2px}
+
+/* KEYWORDS */
+.kw-wrap{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.kw{padding:3px 10px;border-radius:20px;font-size:12px;background:var(--primary-light);color:var(--primary-dark);border:1px solid transparent}
+
+/* HISTORY */
+.h-item{padding:10px 0;border-bottom:1px solid var(--border)}
+.h-item:last-child{border-bottom:none}
+.h-tag{display:inline-flex;align-items:center;gap:3px;font-size:11px;padding:2px 7px;border-radius:20px;background:var(--bg2);color:var(--text2);border:1px solid var(--border);margin-bottom:4px}
+.h-orig{font-size:12px;color:var(--text2);margin-bottom:2px}
+.h-trans{font-size:14px;color:var(--text);font-weight:500}
+.star{font-size:16px;cursor:pointer;color:var(--text3);background:none;border:none;padding:0 4px}
+.star.on{color:#EF9F27}
+
+/* MULTI-LANG GRID */
+.multi-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.multi-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:10px}
+.multi-card .lang-name{font-size:11px;color:var(--text2);font-weight:600;margin-bottom:4px}
+.multi-card .lang-result{font-size:14px;color:var(--text);line-height:1.4}
+
+/* PRESETS */
+.preset-grid{display:flex;flex-wrap:wrap;gap:6px}
+
+/* INSTALL BANNER */
+.install-banner{display:none;align-items:center;gap:10px;padding:12px 16px;background:var(--primary-light);border-bottom:1px solid var(--primary);color:var(--primary-dark);font-size:13px}
+.install-banner button{margin-left:auto;background:var(--primary);color:#fff;border:none;border-radius:var(--radius-sm);padding:6px 14px;font-size:13px;cursor:pointer;font-family:var(--font)}
+
+/* SEARCH */
+.search-wrap{position:relative;margin-bottom:10px}
+.search-wrap i{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:16px;color:var(--text3)}
+.search-input{width:100%;height:38px;padding:0 12px 0 34px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--bg2);color:var(--text);font-size:14px;font-family:var(--font)}
+.search-input:focus{outline:none;border-color:var(--primary)}
+
+/* SPEED CONTROL */
+.speed-wrap{display:flex;align-items:center;gap:8px}
+.speed-wrap input[type=range]{flex:1;accent-color:var(--primary)}
+.speed-val{font-size:13px;font-weight:600;color:var(--primary);min-width:32px}
+
+/* FILTER TABS */
+.filter-tabs{display:flex;gap:6px;margin-bottom:10px}
+.filter-tab{padding:4px 12px;border-radius:20px;font-size:12px;border:1px solid var(--border2);background:var(--bg2);color:var(--text2);cursor:pointer}
+.filter-tab.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+
+/* COPY TOAST */
+#toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:#333;color:#fff;padding:8px 18px;border-radius:20px;font-size:13px;opacity:0;transition:all .25s;pointer-events:none;z-index:999}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* BOTTOM SAFE AREA */
+.bottom-space{height:env(safe-area-inset-bottom,0)}
+
+/* OFFLINE BANNER */
+#offline-banner{display:none;background:var(--warning-light);color:var(--warning);font-size:12px;padding:6px 16px;text-align:center;border-bottom:1px solid var(--warning)}
+</style>
+</head>
+<body>
+
+<div id="offline-banner"><i class="ti ti-wifi-off" style="font-size:14px;vertical-align:-2px"></i> 目前離線，部分功能需要網路連線</div>
+
+<div id="install-banner" class="install-banner">
+  <i class="ti ti-download" style="font-size:20px"></i>
+  <span>安裝到主畫面，隨時使用</span>
+  <button id="install-btn">安裝</button>
+  <button onclick="document.getElementById('install-banner').style.display='none'" style="background:none;border:none;color:var(--primary-dark);cursor:pointer;font-size:20px;line-height:1;margin-left:4px">×</button>
+</div>
+
+<div class="topbar">
+  <div class="logo"><i class="ti ti-language"></i></div>
+  <div class="topbar-title">
+    <h1>即時翻譯機</h1>
+    <p>多國語言 · 語音 · 圖片 · 對話</p>
+  </div>
+  <div class="topbar-actions">
+    <span id="global-pill" class="status-pill"><i class="ti ti-circle" style="font-size:9px"></i> 就緒</span>
+    <div class="icon-btn" onclick="switchTab('settings')" title="設定"><i class="ti ti-settings"></i></div>
+  </div>
+</div>
+
+<nav class="nav" id="main-nav">
+  <div class="nav-tab active" onclick="switchTab('voice')" data-tab="voice"><i class="ti ti-microphone"></i><span>語音</span></div>
+  <div class="nav-tab" onclick="switchTab('convo')" data-tab="convo"><i class="ti ti-messages"></i><span>對話</span></div>
+  <div class="nav-tab" onclick="switchTab('text')" data-tab="text"><i class="ti ti-keyboard"></i><span>打字</span></div>
+  <div class="nav-tab" onclick="switchTab('image')" data-tab="image"><i class="ti ti-camera"></i><span>圖片</span></div>
+  <div class="nav-tab" onclick="switchTab('transcribe')" data-tab="transcribe"><i class="ti ti-file-text"></i><span>轉寫</span></div>
+  <div class="nav-tab" onclick="switchTab('summary')" data-tab="summary"><i class="ti ti-notes"></i><span>摘要</span></div>
+  <div class="nav-tab" onclick="switchTab('float')" data-tab="float"><i class="ti ti-layout-navbar"></i><span>懸浮</span></div>
+  <div class="nav-tab" onclick="switchTab('history')" data-tab="history"><i class="ti ti-history"></i><span>歷史</span></div>
+  <div class="nav-tab" onclick="switchTab('settings')" data-tab="settings"><i class="ti ti-settings"></i><span>設定</span></div>
+</nav>
+
+<div class="main" id="main">
+
+<!-- ===== VOICE ===== -->
+<div id="panel-voice" class="panel active">
+  <div class="card">
+    <div class="card-title">來源 / 目標語言</div>
+    <div class="lang-row">
+      <select id="v-src">
+        <option value="zh-TW">中文（繁體）</option><option value="zh-CN">中文（簡體）</option>
+        <option value="en-US">English</option><option value="ja-JP">日本語</option>
+        <option value="ko-KR">한국어</option><option value="fr-FR">Français</option>
+        <option value="de-DE">Deutsch</option><option value="es-ES">Español</option>
+        <option value="th-TH">ภาษาไทย</option><option value="vi-VN">Tiếng Việt</option>
+        <option value="ar-SA">العربية</option><option value="pt-PT">Português</option>
+        <option value="ru-RU">Русский</option><option value="it-IT">Italiano</option>
+      </select>
+      <button class="swap-btn" onclick="swapSel('v-src','v-tgt')" title="交換語言"><i class="ti ti-arrows-exchange"></i></button>
+      <select id="v-tgt">
+        <option value="zh-TW">中文（繁體）</option><option value="zh-CN">中文（簡體）</option>
+        <option value="en-US" selected>English</option><option value="ja-JP">日本語</option>
+        <option value="ko-KR">한국어</option><option value="fr-FR">Français</option>
+        <option value="de-DE">Deutsch</option><option value="es-ES">Español</option>
+        <option value="th-TH">ภาษาไทย</option><option value="vi-VN">Tiếng Việt</option>
+        <option value="ar-SA">العربية</option><option value="pt-PT">Português</option>
+        <option value="ru-RU">Русский</option><option value="it-IT">Italiano</option>
+      </select>
+    </div>
+
+    <div class="card-title">即時識別</div>
+    <div id="v-wave" class="wave" style="display:none">
+      <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+      <div class="wave-bar"></div><div class="wave-bar"></div>
+      <span style="font-size:12px;color:var(--primary);margin-left:8px">聆聽中...</span>
+    </div>
+    <div id="v-interim" class="result-box result-placeholder" style="min-height:60px">點擊「開始聆聽」後說話...</div>
+    <div class="conf-wrap"><div class="conf-bar" id="v-conf"></div></div>
+
+    <div class="card-title" style="margin-top:10px">翻譯結果</div>
+    <div id="v-result" class="result-box result-placeholder">翻譯將在此顯示</div>
+
+    <div class="btn-row">
+      <button class="btn primary" id="v-btn" onclick="toggleVoice()" style="flex:1;justify-content:center">
+        <i class="ti ti-microphone"></i> 開始聆聽
+      </button>
+      <button class="btn" onclick="speakEl('v-result','v-tgt')"><i class="ti ti-volume"></i></button>
+      <button class="btn" onclick="copyEl('v-result')"><i class="ti ti-copy"></i></button>
+      <button class="btn" onclick="favEl('v-result')"><i class="ti ti-star"></i></button>
+    </div>
+    <div id="v-status" class="status-text"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">快速預設</div>
+    <div class="preset-grid">
+      <button class="btn" onclick="setPreset('v-src','v-tgt','zh-TW','en-US')">中 → 英</button>
+      <button class="btn" onclick="setPreset('v-src','v-tgt','en-US','zh-TW')">英 → 中</button>
+      <button class="btn" onclick="setPreset('v-src','v-tgt','ja-JP','zh-TW')">日 → 中</button>
+      <button class="btn" onclick="setPreset('v-src','v-tgt','ko-KR','zh-TW')">韓 → 中</button>
+      <button class="btn" onclick="setPreset('v-src','v-tgt','zh-TW','ja-JP')">中 → 日</button>
+      <button class="btn" onclick="setPreset('v-src','v-tgt','zh-TW','ko-KR')">中 → 韓</button>
+      <button class="btn" onclick="setPreset('v-src','v-tgt','fr-FR','zh-TW')">法 → 中</button>
+      <button class="btn" onclick="setPreset('v-src','v-tgt','de-DE','zh-TW')">德 → 中</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">語音播放速度</div>
+    <div class="speed-wrap">
+      <span style="font-size:12px;color:var(--text2)">慢</span>
+      <input type="range" min="0.5" max="2" step="0.1" value="1" id="v-speed"
+        oninput="gl('v-spd').textContent=parseFloat(this.value).toFixed(1)+'x'">
+      <span style="font-size:12px;color:var(--text2)">快</span>
+      <span class="speed-val" id="v-spd">1.0x</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== CONVERSATION ===== -->
+<div id="panel-convo" class="panel">
+  <div class="card">
+    <div class="card-title">雙人即時對話翻譯</div>
+    <div class="spk-grid">
+      <div class="spk-card">
+        <div class="spk-avatar a">A</div>
+        <select id="c-lang-a" style="margin-bottom:8px;font-size:13px">
+          <option value="en-US" selected>English</option>
+          <option value="zh-TW">中文（繁體）</option><option value="zh-CN">中文（簡體）</option>
+          <option value="ja-JP">日本語</option><option value="ko-KR">한국어</option>
+          <option value="fr-FR">Français</option><option value="de-DE">Deutsch</option>
+          <option value="es-ES">Español</option>
+        </select>
+        <button class="btn primary btn-full" id="c-btn-a" onclick="toggleConvo('a')">
+          <i class="ti ti-microphone"></i> 說話 A
+        </button>
+      </div>
+      <div class="spk-card">
+        <div class="spk-avatar b">B</div>
+        <select id="c-lang-b" style="margin-bottom:8px;font-size:13px">
+          <option value="zh-TW" selected>中文（繁體）</option>
+          <option value="zh-CN">中文（簡體）</option><option value="en-US">English</option>
+          <option value="ja-JP">日本語</option><option value="ko-KR">한국어</option>
+          <option value="fr-FR">Français</option><option value="de-DE">Deutsch</option>
+        </select>
+        <button class="btn success btn-full" id="c-btn-b" onclick="toggleConvo('b')">
+          <i class="ti ti-microphone"></i> 說話 B
+        </button>
+      </div>
+    </div>
+    <div id="c-wave" class="wave" style="display:none">
+      <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+      <div class="wave-bar"></div><div class="wave-bar"></div>
+      <span id="c-wave-lbl" style="font-size:12px;color:var(--primary);margin-left:8px">識別中...</span>
+    </div>
+    <div id="c-status" class="status-text"></div>
+  </div>
+
+  <div class="card" style="padding:12px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <span class="card-title" style="margin:0">對話記錄</span>
+      <div style="display:flex;gap:6px">
+        <button class="btn" style="height:30px;font-size:12px;padding:0 10px" onclick="exportConvo()">
+          <i class="ti ti-download" style="font-size:13px"></i> 匯出
+        </button>
+        <button class="btn danger" style="height:30px;font-size:12px;padding:0 10px" onclick="clearConvo()">
+          <i class="ti ti-trash" style="font-size:13px"></i> 清除
+        </button>
+      </div>
+    </div>
+    <div class="chat-area" id="chat-area">
+      <div style="text-align:center;color:var(--text3);font-size:13px;margin:auto">選擇語言後按下說話按鈕開始對話</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TEXT ===== -->
+<div id="panel-text" class="panel">
+  <div class="card">
+    <div class="lang-row">
+      <select id="t-src">
+        <option value="zh-TW" selected>中文（繁體）</option><option value="zh-CN">中文（簡體）</option>
+        <option value="en-US">English</option><option value="ja-JP">日本語</option>
+        <option value="ko-KR">한국어</option><option value="fr-FR">Français</option>
+        <option value="de-DE">Deutsch</option><option value="es-ES">Español</option>
+        <option value="ar-SA">العربية</option><option value="ru-RU">Русский</option>
+        <option value="it-IT">Italiano</option><option value="pt-PT">Português</option>
+      </select>
+      <button class="swap-btn" onclick="swapSel('t-src','t-tgt')"><i class="ti ti-arrows-exchange"></i></button>
+      <select id="t-tgt">
+        <option value="zh-TW">中文（繁體）</option><option value="zh-CN">中文（簡體）</option>
+        <option value="en-US" selected>English</option><option value="ja-JP">日本語</option>
+        <option value="ko-KR">한국어</option><option value="fr-FR">Français</option>
+        <option value="de-DE">Deutsch</option><option value="es-ES">Español</option>
+        <option value="ar-SA">العربية</option><option value="ru-RU">Русский</option>
+        <option value="it-IT">Italiano</option><option value="pt-PT">Português</option>
+      </select>
+    </div>
+
+    <textarea id="t-input" rows="4" placeholder="輸入要翻譯的文字..." oninput="onTextInput()"></textarea>
+    <div class="char-count"><span id="t-chars">0</span> 字 <label style="margin-left:10px"><input type="checkbox" id="t-auto" checked> 即時翻譯</label></div>
+
+    <div class="divider"></div>
+    <div id="t-result" class="result-box result-placeholder">翻譯將在此顯示</div>
+    <div class="btn-row">
+      <button class="btn primary" onclick="doTextTx()" style="flex:1;justify-content:center"><i class="ti ti-language"></i> 翻譯</button>
+      <button class="btn" onclick="speakEl('t-result','t-tgt')"><i class="ti ti-volume"></i></button>
+      <button class="btn" onclick="copyEl('t-result')"><i class="ti ti-copy"></i></button>
+      <button class="btn" onclick="favEl('t-result')"><i class="ti ti-star"></i></button>
+      <button class="btn" onclick="swapTxtContent()"><i class="ti ti-arrows-exchange"></i></button>
+    </div>
+    <div id="t-status" class="status-text"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">多語同步翻譯</div>
+    <textarea id="multi-input" rows="2" placeholder="輸入後點擊「多語翻譯」，一次翻多種語言..."></textarea>
+    <button class="btn primary btn-full" style="margin-top:8px" onclick="doMultiTx()">
+      <i class="ti ti-world"></i> 多語翻譯
+    </button>
+    <div class="multi-grid" id="multi-grid"></div>
+  </div>
+</div>
+
+<!-- ===== IMAGE ===== -->
+<div id="panel-image" class="panel">
+  <div class="card">
+    <div class="lang-row">
+      <span style="font-size:13px;color:var(--text2);flex-shrink:0">圖片語言</span>
+      <select id="i-src">
+        <option value="eng">English</option><option value="chi_tra">中文（繁）</option>
+        <option value="chi_sim">中文（簡）</option><option value="jpn">日本語</option>
+        <option value="kor">한국어</option><option value="fra">Français</option>
+        <option value="deu">Deutsch</option><option value="spa">Español</option>
+      </select>
+      <i class="ti ti-arrow-right" style="font-size:14px;color:var(--text3)"></i>
+      <select id="i-tgt">
+        <option value="zh-TW" selected>中文（繁體）</option>
+        <option value="en-US">English</option><option value="ja-JP">日本語</option>
+        <option value="ko-KR">한국어</option><option value="fr-FR">Français</option>
+      </select>
+    </div>
+
+    <div class="img-drop" id="img-drop" onclick="gl('img-file').click()"
+      ondrop="handleDrop(event)" ondragover="event.preventDefault();this.classList.add('dragover')"
+      ondragleave="this.classList.remove('dragover')">
+      <i class="ti ti-photo-plus"></i>
+      <p>點擊上傳圖片 · 拖放 · 手機拍照</p>
+      <input type="file" id="img-file" accept="image/*" capture="environment" style="display:none" onchange="loadImg(event)">
+    </div>
+
+    <img id="img-preview" alt="圖片預覽">
+    <div class="ocr-prog" id="ocr-prog"><div class="ocr-fill" id="ocr-fill"></div></div>
+
+    <div class="card-title" style="margin-top:10px">識別文字（OCR）</div>
+    <div id="i-ocr" class="result-box result-placeholder" style="min-height:60px">上傳圖片後顯示識別文字</div>
+
+    <div class="card-title" style="margin-top:10px">翻譯結果</div>
+    <div id="i-result" class="result-box result-placeholder" style="min-height:60px">翻譯將在此顯示</div>
+
+    <div class="btn-row">
+      <button class="btn primary" onclick="doOCR()" style="flex:1;justify-content:center"><i class="ti ti-scan"></i> 識別並翻譯</button>
+      <button class="btn" onclick="speakEl('i-result','i-tgt')"><i class="ti ti-volume"></i></button>
+      <button class="btn" onclick="copyEl('i-result')"><i class="ti ti-copy"></i></button>
+    </div>
+    <div id="i-status" class="status-text">需要 Tesseract.js（首次使用自動載入，需要網路）</div>
+  </div>
+</div>
+
+<!-- ===== TRANSCRIBE ===== -->
+<div id="panel-transcribe" class="panel">
+  <div class="card">
+    <div class="lang-row">
+      <span style="font-size:13px;color:var(--text2);flex-shrink:0">說話語言</span>
+      <select id="tr-lang">
+        <option value="zh-TW">中文（繁體）</option><option value="zh-CN">中文（簡體）</option>
+        <option value="en-US" selected>English</option><option value="ja-JP">日本語</option>
+        <option value="ko-KR">한국어</option><option value="fr-FR">Français</option>
+        <option value="de-DE">Deutsch</option><option value="es-ES">Español</option>
+      </select>
+    </div>
+
+    <div id="tr-wave" class="wave" style="display:none">
+      <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+      <div class="wave-bar"></div><div class="wave-bar"></div>
+      <span style="font-size:12px;color:var(--primary);margin-left:8px">錄音轉寫中...</span>
+    </div>
+
+    <textarea id="tr-result" rows="8" placeholder="轉寫文字將在此顯示，邊說邊出現..." style="font-size:14px"></textarea>
+    <div style="display:flex;justify-content:space-between;margin-top:4px">
+      <span id="tr-words" class="status-text" style="margin:0">0 字</span>
+      <span id="tr-time" class="status-text" style="margin:0;font-weight:600;color:var(--primary)">00:00</span>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn primary" id="tr-btn" onclick="toggleTr()" style="flex:1;justify-content:center">
+        <i class="ti ti-record-mail"></i> 開始錄音轉寫
+      </button>
+      <button class="btn" onclick="copyEl('tr-result',true)"><i class="ti ti-copy"></i></button>
+      <button class="btn" onclick="dlTxt('tr-result','transcription.txt',true)"><i class="ti ti-download"></i></button>
+      <button class="btn danger" onclick="gl('tr-result').value='';gl('tr-words').textContent='0 字'"><i class="ti ti-trash"></i></button>
+    </div>
+    <div id="tr-status" class="status-text">支援即時轉寫，說話即顯示文字</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">轉寫後自動翻譯</div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+      <div class="toggle" id="tr-auto-tog" onclick="togEl('tr-auto-tog')"></div>
+      <span style="font-size:13px;color:var(--text2)">完成後自動翻譯到</span>
+      <select id="tr-tgt" style="flex:1;height:34px;font-size:13px">
+        <option value="zh-TW" selected>中文（繁體）</option>
+        <option value="en-US">English</option><option value="ja-JP">日本語</option>
+      </select>
+    </div>
+    <div id="tr-trans" class="result-box" style="display:none;min-height:40px"></div>
+  </div>
+</div>
+
+<!-- ===== SUMMARY ===== -->
+<div id="panel-summary" class="panel">
+  <div class="card">
+    <div class="lang-row">
+      <span style="font-size:13px;color:var(--text2);flex-shrink:0">說話語言</span>
+      <select id="s-lang">
+        <option value="zh-TW" selected>中文（繁體）</option><option value="zh-CN">中文（簡體）</option>
+        <option value="en-US">English</option><option value="ja-JP">日本語</option>
+      </select>
+    </div>
+
+    <div id="s-wave" class="wave" style="display:none">
+      <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+      <div class="wave-bar"></div><div class="wave-bar"></div>
+      <span style="font-size:12px;color:var(--primary);margin-left:8px">錄音中...</span>
+    </div>
+
+    <textarea id="s-raw" rows="4" placeholder="點擊錄音，或直接貼上文字進行摘要..."></textarea>
+
+    <div class="btn-row" style="margin-bottom:8px">
+      <button class="btn primary" id="s-btn" onclick="toggleSRec()" style="flex:1;justify-content:center">
+        <i class="ti ti-microphone"></i> 開始錄音
+      </button>
+      <button class="btn warn" onclick="doSummary()"><i class="ti ti-bulb"></i> 生成摘要</button>
+      <button class="btn" onclick="doKeywords()"><i class="ti ti-tags"></i> 關鍵詞</button>
+    </div>
+
+    <div id="s-kw" class="kw-wrap" style="display:none"></div>
+    <div class="divider"></div>
+
+    <div class="card-title">智能摘要</div>
+    <div id="s-summary" class="result-box result-placeholder" style="min-height:120px">
+      點擊「生成摘要」後顯示重點整理
+    </div>
+
+    <div class="metrics" id="s-metrics" style="display:none">
+      <div class="metric"><div class="num" id="m-chars">0</div><div class="lbl">字數</div></div>
+      <div class="metric"><div class="num" id="m-sents">0</div><div class="lbl">句數</div></div>
+      <div class="metric"><div class="num" id="m-kws">0</div><div class="lbl">關鍵詞</div></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn" onclick="speakEl('s-summary','s-lang')"><i class="ti ti-volume"></i> 朗讀</button>
+      <button class="btn" onclick="copyEl('s-summary')"><i class="ti ti-copy"></i> 複製</button>
+      <button class="btn" onclick="dlTxt('s-summary','summary.txt')"><i class="ti ti-download"></i> 匯出</button>
+    </div>
+    <div id="s-status" class="status-text"></div>
+  </div>
+</div>
+
+<!-- ===== FLOAT ===== -->
+<div id="panel-float" class="panel">
+  <div class="card">
+    <div class="card-title">懸浮翻譯設定</div>
+    <div class="lang-row">
+      <select id="f-src">
+        <option value="auto">自動偵測</option><option value="en-US" selected>English</option>
+        <option value="zh-TW">中文（繁體）</option><option value="ja-JP">日本語</option>
+        <option value="ko-KR">한국어</option>
+      </select>
+      <i class="ti ti-arrow-right" style="font-size:14px;color:var(--text3)"></i>
+      <select id="f-tgt">
+        <option value="zh-TW" selected>中文（繁體）</option>
+        <option value="en-US">English</option><option value="ja-JP">日本語</option>
+        <option value="ko-KR">한국어</option>
+      </select>
+    </div>
+
+    <div class="toggle-row">
+      <div class="toggle-info"><h3>全域懸浮模式</h3><p>選取任意文字自動翻譯</p></div>
+      <div class="toggle" id="f-global" onclick="toggleFGlobal()"></div>
+    </div>
+    <div class="toggle-row">
+      <div class="toggle-info"><h3>自動朗讀</h3><p>翻譯後自動播放語音</p></div>
+      <div class="toggle" id="f-autospeak" onclick="togEl('f-autospeak')"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">測試區 — 選取文字後點擊翻譯</div>
+    <div id="f-sample" style="padding:12px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);font-size:14px;line-height:1.8;user-select:text;margin-bottom:10px">
+      The world is full of wonders waiting to be discovered. Every language carries a unique way of seeing reality. 語言是思想的載體。Learning to translate is learning to think differently.
+    </div>
+    <button class="btn primary btn-full" onclick="doFloat()">
+      <i class="ti ti-layout-navbar"></i> 翻譯選取文字
+    </button>
+
+    <div id="f-box" style="display:none;margin-top:10px;padding:12px;background:var(--bg);border:1px solid var(--primary);border-radius:var(--radius);box-shadow:var(--shadow)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <span style="font-size:11px;font-weight:600;color:var(--primary)"><i class="ti ti-language" style="font-size:13px"></i> 懸浮翻譯</span>
+        <button onclick="gl('f-box').style.display='none'" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:18px;line-height:1">×</button>
+      </div>
+      <div id="f-src-txt" style="font-size:12px;color:var(--text2);margin-bottom:5px"></div>
+      <div id="f-result" style="font-size:15px;font-weight:500;color:var(--text)"></div>
+      <div class="btn-row" style="margin-top:8px">
+        <button class="btn" style="height:30px;font-size:12px" onclick="speakEl('f-result','f-tgt')"><i class="ti ti-volume" style="font-size:13px"></i> 播放</button>
+        <button class="btn" style="height:30px;font-size:12px" onclick="copyEl('f-result')"><i class="ti ti-copy" style="font-size:13px"></i> 複製</button>
+      </div>
+    </div>
+    <div id="f-status" class="status-text"></div>
+  </div>
+</div>
+
+<!-- ===== HISTORY ===== -->
+<div id="panel-history" class="panel">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <span class="card-title" style="margin:0">翻譯歷史記錄</span>
+      <div style="display:flex;gap:6px">
+        <button class="btn" style="height:30px;font-size:12px;padding:0 10px" onclick="exportH()"><i class="ti ti-download" style="font-size:13px"></i></button>
+        <button class="btn danger" style="height:30px;font-size:12px;padding:0 10px" onclick="clearH()"><i class="ti ti-trash" style="font-size:13px"></i></button>
+      </div>
+    </div>
+    <div class="search-wrap"><i class="ti ti-search"></i><input type="text" class="search-input" id="h-search" placeholder="搜尋記錄..." oninput="renderH()"></div>
+    <div class="filter-tabs">
+      <div class="filter-tab active" id="hf-all" onclick="setHFilter('all')">全部</div>
+      <div class="filter-tab" id="hf-fav" onclick="setHFilter('fav')">收藏 ★</div>
+    </div>
+    <div id="h-list"><p style="font-size:13px;color:var(--text3);text-align:center;padding:20px">尚無翻譯記錄</p></div>
+    <div id="h-count" class="status-text" style="text-align:right"></div>
+  </div>
+</div>
+
+<!-- ===== SETTINGS ===== -->
+<div id="panel-settings" class="panel">
+  <div class="card">
+    <div class="card-title">語音設定</div>
+    <div class="toggle-row">
+      <div class="toggle-info"><h3>自動播放翻譯語音</h3><p>語音翻譯完成後自動朗讀</p></div>
+      <div class="toggle on" id="cfg-autospeak" onclick="togEl('cfg-autospeak')"></div>
+    </div>
+    <div class="toggle-row">
+      <div class="toggle-info"><h3>連續辨識模式</h3><p>停頓後自動繼續錄音</p></div>
+      <div class="toggle on" id="cfg-cont" onclick="togEl('cfg-cont')"></div>
+    </div>
+    <div class="toggle-row">
+      <div class="toggle-info"><h3>預設播放速度</h3></div>
+      <div class="speed-wrap" style="flex:1;justify-content:flex-end">
+        <input type="range" min="0.5" max="2" step="0.1" value="1" id="cfg-speed"
+          oninput="gl('cfg-spd').textContent=parseFloat(this.value).toFixed(1)+'x'">
+        <span class="speed-val" id="cfg-spd">1.0x</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">翻譯設定</div>
+    <div class="toggle-row">
+      <div class="toggle-info"><h3>即時自動翻譯</h3><p>輸入停頓 0.8 秒後自動翻譯</p></div>
+      <div class="toggle on" id="cfg-autotx" onclick="togEl('cfg-autotx')"></div>
+    </div>
+    <div class="toggle-row">
+      <div class="toggle-info"><h3>保存翻譯歷史</h3><p>記錄最近 100 筆翻譯</p></div>
+      <div class="toggle on" id="cfg-hist" onclick="togEl('cfg-hist')"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">關於</div>
+    <div class="toggle-row"><span style="font-size:13px;color:var(--text2)">版本</span><span style="font-size:13px;font-weight:600">2.0 PWA</span></div>
+    <div class="toggle-row"><span style="font-size:13px;color:var(--text2)">翻譯引擎</span><span style="font-size:13px">MyMemory API（免費）</span></div>
+    <div class="toggle-row"><span style="font-size:13px;color:var(--text2)">語音識別</span><span style="font-size:13px">Web Speech API</span></div>
+    <div class="toggle-row"><span style="font-size:13px;color:var(--text2)">OCR 引擎</span><span style="font-size:13px">Tesseract.js v5</span></div>
+    <div class="toggle-row"><span style="font-size:13px;color:var(--text2)">建議瀏覽器</span><span style="font-size:13px">Google Chrome</span></div>
+    <div class="toggle-row">
+      <span style="font-size:13px;color:var(--text2)">離線支援</span>
+      <span id="pwa-status" style="font-size:13px;color:var(--text3)">檢查中...</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">資料管理</div>
+    <div class="btn-row">
+      <button class="btn" onclick="exportH()"><i class="ti ti-download"></i> 匯出歷史</button>
+      <button class="btn danger" onclick="if(confirm('確定清除所有記錄？')){H=[];renderH();showToast('已清除')}"><i class="ti ti-trash"></i> 清除所有記錄</button>
+    </div>
+  </div>
+</div>
+
+<div class="bottom-space"></div>
+</div><!-- end main -->
+
+<div id="toast"></div>
+
+<script>
+// ── STATE ─────────────────────────────────────────────
+var H=[],vRec=null,isV=false,cRec=null,isCon=false,cWho=null,
+    trRec=null,isTr=false,trTmr=null,trSec=0,
+    sRec=null,isS=false,sTxt='',
+    autoTmr=null,convoMsgs=[],curImg=null,fGlobal=false,
+    hFilter='all',deferredPrompt=null;
+
+// ── UTILS ─────────────────────────────────────────────
+function gl(id){return document.getElementById(id)}
+function togEl(id){var e=gl(id);if(e)e.classList.toggle('on')}
+function isOn(id){var e=gl(id);return e&&e.classList.contains('on')}
+function setStatus(id,msg){var e=gl(id);if(e)e.textContent=msg}
+function showToast(msg){var t=gl('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000)}
+function setGlobal(msg,type){
+  var e=gl('global-pill');if(!e)return;
+  e.className='status-pill'+(type==='ok'?' ok':type==='active'?' active':'');
+  e.innerHTML='<i class="ti ti-circle" style="font-size:9px"></i> '+msg;
+}
+function lc(v){return v==='auto'?'autodetect':v.split('-')[0]}
+function swapSel(a,b){var t=gl(a).value;gl(a).value=gl(b).value;gl(b).value=t}
+function setPreset(sa,tb,sv,tv){gl(sa).value=sv;gl(tb).value=tv}
+function pad(n){return n<10?'0'+n:n}
+
+function copyEl(id,isTA){
+  var e=gl(id);if(!e)return;
+  var t=isTA||e.tagName==='TEXTAREA'?e.value:e.textContent;
+  if(!t.trim())return;
+  navigator.clipboard.writeText(t).then(()=>showToast('已複製')).catch(()=>{});
+}
+function speakEl(id,langSel){
+  var e=gl(id);if(!e)return;
+  var t=e.tagName==='TEXTAREA'?e.value:e.textContent;
+  if(!t||t.trim()==='翻譯將在此顯示')return;
+  var spd=parseFloat((gl('cfg-speed')||{value:'1'}).value)||1;
+  var u=new SpeechSynthesisUtterance(t);
+  u.lang=gl(langSel)?gl(langSel).value:'zh-TW';u.rate=spd;
+  speechSynthesis.cancel();speechSynthesis.speak(u);
+}
+function favEl(id){
+  var e=gl(id);if(!e)return;
+  var t=e.tagName==='TEXTAREA'?e.value:e.textContent;
+  var last=H.find(h=>h.tgt===t);
+  if(last){last.fav=!last.fav;showToast(last.fav?'已加入收藏':'已取消收藏')}
+}
+function dlTxt(id,name,isTA){
+  var e=gl(id);if(!e)return;
+  var t=isTA||e.tagName==='TEXTAREA'?e.value:e.textContent;
+  var a=document.createElement('a');a.href='data:text/plain;charset=utf-8,'+encodeURIComponent(t);a.download=name;a.click();
+}
+
+// ── TRANSLATE API ──────────────────────────────────────
+function txAPI(text,src,tgt,cb){
+  if(!text||!text.trim()){cb('');return}
+  var s=lc(src),t=lc(tgt);
+  var url='https://api.mymemory.translated.net/get?q='+encodeURIComponent(text.substring(0,500))+'&langpair='+s+'|'+t+'&de=ellie.huang37@gmail.com';
+  fetch(url).then(r=>r.json()).then(d=>{
+    var r=d.responseData&&d.responseData.translatedText?d.responseData.translatedText:text;
+    if(isOn('cfg-hist'))addH(text,r,src,tgt);
+    cb(r);
+  }).catch(()=>cb('[翻譯失敗，請檢查網路連線]'));
+}
+function addH(src,tgt,sl,tl){
+  H.unshift({src:src.substring(0,200),tgt:tgt.substring(0,200),sl,tl,time:new Date().toLocaleTimeString('zh-TW'),fav:false,id:Date.now()});
+  if(H.length>100)H.pop();
+}
+
+// ── TAB SWITCH ────────────────────────────────────────
+function switchTab(name){
+  var tabs=['voice','convo','text','image','transcribe','summary','float','history','settings'];
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  var idx=tabs.indexOf(name);
+  if(idx>-1){document.querySelectorAll('.nav-tab')[idx].classList.add('active');}
+  var p=gl('panel-'+name);if(p)p.classList.add('active');
+  if(name==='history')renderH();
+  // scroll nav tab into view
+  var nt=document.querySelectorAll('.nav-tab')[idx];
+  if(nt)nt.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
+  // check URL param
+  if(history.replaceState)history.replaceState(null,'','?tab='+name);
+}
+
+// ── VOICE ─────────────────────────────────────────────
+function toggleVoice(){
+  if(isV){stopV();return}
+  if(!('webkitSpeechRecognition'in window||'SpeechRecognition'in window)){
+    setStatus('v-status','⚠ 請使用 Chrome 瀏覽器以支援語音識別');return
+  }
+  var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  vRec=new SR();
+  vRec.lang=gl('v-src').value;
+  vRec.continuous=isOn('cfg-cont');
+  vRec.interimResults=true;
+  vRec.onstart=()=>{
+    isV=true;
+    gl('v-btn').innerHTML='<i class="ti ti-square"></i> 停止聆聽';
+    gl('v-btn').classList.add('recording');
+    gl('v-wave').style.display='flex';
+    setStatus('v-status','聆聽中，請說話...');
+    setGlobal('聆聽中','active');
+  };
+  vRec.onresult=e=>{
+    var interim='',fin='';
+    for(var i=e.resultIndex;i<e.results.length;i++){
+      if(e.results[i].isFinal)fin+=e.results[i][0].transcript;
+      else interim+=e.results[i][0].transcript;
+    }
+    var conf=e.results[e.resultIndex]?Math.round(e.results[e.resultIndex][0].confidence*100):0;
+    gl('v-conf').style.width=conf+'%';
+    var vi=gl('v-interim');vi.textContent=fin||interim;vi.classList.remove('result-placeholder');
+    if(fin){
+      setStatus('v-status','翻譯中...');
+      txAPI(fin,gl('v-src').value,gl('v-tgt').value,res=>{
+        var vr=gl('v-result');vr.textContent=res;vr.classList.remove('result-placeholder');
+        if(isOn('cfg-autospeak'))speakEl('v-result','v-tgt');
+        setStatus('v-status','翻譯完成 ✓');setGlobal('就緒','ok');
+      });
+    }
+  };
+  vRec.onerror=e=>{setStatus('v-status','錯誤：'+e.error);stopV()};
+  vRec.onend=()=>{if(isV)vRec.start()};
+  vRec.start();
+}
+function stopV(){
+  isV=false;if(vRec)vRec.stop();
+  gl('v-btn').innerHTML='<i class="ti ti-microphone"></i> 開始聆聽';
+  gl('v-btn').classList.remove('recording');
+  gl('v-wave').style.display='none';
+  setStatus('v-status','已停止');setGlobal('就緒');
+}
+
+// ── CONVERSATION ──────────────────────────────────────
+function toggleConvo(who){
+  if(isCon&&cWho===who){stopCon();return}
+  if(isCon)stopCon();
+  var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){setStatus('c-status','請使用 Chrome 瀏覽器');return}
+  cWho=who;cRec=new SR();
+  cRec.lang=gl('c-lang-'+who).value;
+  cRec.continuous=false;cRec.interimResults=false;
+  cRec.onstart=()=>{
+    isCon=true;
+    var b=gl('c-btn-'+who);b.innerHTML='<i class="ti ti-square"></i> 停止';b.classList.add('recording');
+    gl('c-wave').style.display='flex';gl('c-wave-lbl').textContent=who.toUpperCase()+' 說話中...';
+    setStatus('c-status','正在聆聽 '+who.toUpperCase()+'...');
+  };
+  cRec.onresult=e=>{
+    var txt=e.results[0][0].transcript;
+    var other=who==='a'?'b':'a';
+    var tgtLang=gl('c-lang-'+other).value;
+    var srcLang=gl('c-lang-'+who).value;
+    txAPI(txt,srcLang,tgtLang,trans=>{
+      addChatMsg(who,txt,trans);
+      speakText(trans,tgtLang);
+      stopCon();
+    });
+  };
+  cRec.onerror=e=>{setStatus('c-status','錯誤：'+e.error);stopCon()};
+  cRec.onend=()=>stopCon();
+  cRec.start();
+}
+function stopCon(){
+  isCon=false;if(cRec)cRec.stop();cWho=null;
+  ['a','b'].forEach(w=>{
+    var b=gl('c-btn-'+w);if(!b)return;
+    b.innerHTML='<i class="ti ti-microphone"></i> 說話 '+w.toUpperCase();
+    b.classList.remove('recording');
+  });
+  gl('c-wave').style.display='none';
+}
+function addChatMsg(who,orig,trans){
+  convoMsgs.push({who,orig,trans,time:new Date().toLocaleTimeString('zh-TW')});
+  var ca=gl('chat-area');
+  if(ca.querySelector('div[style*="text-align:center"]'))ca.innerHTML='';
+  var d=document.createElement('div');d.className='msg '+who;
+  d.innerHTML='<div class="msg-meta">'+who.toUpperCase()+' · '+new Date().toLocaleTimeString('zh-TW')+'</div>'+
+    escHtml(orig)+'<div class="msg-trans">→ '+escHtml(trans)+'</div>';
+  ca.appendChild(d);ca.scrollTop=ca.scrollHeight;
+}
+function escHtml(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function clearConvo(){convoMsgs=[];gl('chat-area').innerHTML='<div style="text-align:center;color:var(--text3);font-size:13px;margin:auto">選擇語言後按下說話按鈕開始對話</div>'}
+function exportConvo(){
+  var txt=convoMsgs.map(m=>m.time+' ['+m.who.toUpperCase()+'] '+m.orig+'\n     → '+m.trans).join('\n\n');
+  var a=document.createElement('a');a.href='data:text/plain;charset=utf-8,'+encodeURIComponent(txt);a.download='conversation.txt';a.click();
+}
+
+// ── TEXT ──────────────────────────────────────────────
+var autoTmr2=null;
+function onTextInput(){
+  var v=gl('t-input').value;gl('t-chars').textContent=v.length;
+  if(gl('t-auto').checked&&isOn('cfg-autotx')){clearTimeout(autoTmr2);autoTmr2=setTimeout(doTextTx,800)}
+}
+function doTextTx(){
+  var text=gl('t-input').value.trim();if(!text){setStatus('t-status','請輸入文字');return}
+  setStatus('t-status','翻譯中...');
+  var r=gl('t-result');r.textContent='...';r.classList.add('translating');
+  txAPI(text,gl('t-src').value,gl('t-tgt').value,res=>{
+    r.textContent=res;r.classList.remove('translating','result-placeholder');
+    setStatus('t-status','翻譯完成 ✓');
+  });
+}
+function swapTxtContent(){
+  var a=gl('t-input').value,b=gl('t-result').textContent;
+  if(!b||b==='翻譯將在此顯示'||b==='...')return;
+  gl('t-input').value=b;gl('t-result').textContent=a;
+  swapSel('t-src','t-tgt');
+  gl('t-chars').textContent=b.length;
+}
+function doMultiTx(){
+  var text=gl('multi-input').value.trim();if(!text)return;
+  var langs=[['en-US','English'],['ja-JP','日本語'],['ko-KR','한국어'],['fr-FR','Français'],['de-DE','Deutsch'],['es-ES','Español']];
+  var src=gl('t-src').value;
+  gl('multi-grid').innerHTML=langs.map((_,i)=>
+    '<div class="multi-card"><div class="lang-name">'+langs[i][1]+'</div><div class="lang-result" id="mr-'+i+'">...</div></div>'
+  ).join('');
+  langs.forEach((l,i)=>txAPI(text,src,l[0],r=>{var e=gl('mr-'+i);if(e)e.textContent=r}));
+}
+
+// ── IMAGE ─────────────────────────────────────────────
+function loadImg(e){
+  var f=e.target.files[0];if(!f)return;
+  var r=new FileReader();r.onload=ev=>{
+    var img=gl('img-preview');img.src=ev.target.result;img.style.display='block';
+    curImg=ev.target.result;setStatus('i-status','圖片已載入，點擊「識別並翻譯」');
+    gl('img-drop').style.display='none';
+  };r.readAsDataURL(f);
+}
+function handleDrop(e){
+  e.preventDefault();gl('img-drop').classList.remove('dragover');
+  var f=e.dataTransfer.files[0];if(!f||!f.type.startsWith('image/'))return;
+  var r=new FileReader();r.onload=ev=>{
+    var img=gl('img-preview');img.src=ev.target.result;img.style.display='block';
+    curImg=ev.target.result;setStatus('i-status','圖片已載入');
+    gl('img-drop').style.display='none';
+  };r.readAsDataURL(f);
+}
+function doOCR(){
+  if(!curImg){setStatus('i-status','請先上傳圖片');return}
+  gl('ocr-prog').style.display='block';setStatus('i-status','載入 OCR 引擎...');
+  gl('i-ocr').textContent='識別中...';gl('i-ocr').classList.add('translating');
+  if(typeof Tesseract==='undefined'){
+    var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+    s.onload=runOCR;document.head.appendChild(s);
+  }else runOCR();
+}
+function runOCR(){
+  Tesseract.recognize(curImg,gl('i-src').value,{logger:m=>{
+    if(m.status==='recognizing text'){
+      var p=Math.round(m.progress*100);gl('ocr-fill').style.width=p+'%';
+      setStatus('i-status','識別中 '+p+'%');
+    }
+  }}).then(res=>{
+    gl('ocr-prog').style.display='none';
+    var t=res.data.text.trim();
+    gl('i-ocr').textContent=t||'（未識別到文字）';gl('i-ocr').classList.remove('translating');
+    if(t){setStatus('i-status','識別完成，翻譯中...');txAPI(t,gl('i-src').value,gl('i-tgt').value,r=>{gl('i-result').textContent=r;gl('i-result').classList.remove('result-placeholder');setStatus('i-status','翻譯完成 ✓')});}
+    else setStatus('i-status','未識別到文字，請嘗試更清晰的圖片');
+  }).catch(()=>{gl('ocr-prog').style.display='none';setStatus('i-status','OCR 失敗，請重試')});
+}
+
+// ── TRANSCRIBE ────────────────────────────────────────
+function toggleTr(){
+  if(isTr){stopTr();return}
+  var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){setStatus('tr-status','請使用 Chrome');return}
+  trRec=new SR();trRec.lang=gl('tr-lang').value;trRec.continuous=true;trRec.interimResults=true;
+  trSec=0;trTmr=setInterval(()=>{trSec++;gl('tr-time').textContent=pad(Math.floor(trSec/60))+':'+pad(trSec%60)},1000);
+  trRec.onstart=()=>{
+    isTr=true;gl('tr-btn').innerHTML='<i class="ti ti-square"></i> 停止錄音';
+    gl('tr-btn').classList.add('recording');gl('tr-wave').style.display='flex';
+    setStatus('tr-status','錄音轉寫中...');
+  };
+  trRec.onresult=e=>{
+    var full='';
+    for(var i=0;i<e.results.length;i++)full+=e.results[i][0].transcript+(e.results[i].isFinal?'\n':'');
+    gl('tr-result').value=full;
+    gl('tr-words').textContent=full.replace(/\s+/g,'').length+' 字';
+    if(isOn('tr-auto-tog')&&e.results[e.resultIndex]&&e.results[e.resultIndex].isFinal){
+      txAPI(e.results[e.resultIndex][0].transcript,gl('tr-lang').value,gl('tr-tgt').value,r=>{
+        var el=gl('tr-trans');el.style.display='block';el.classList.remove('result-placeholder');
+        el.textContent=(el.textContent||'')+r+'\n';
+      });
+    }
+  };
+  trRec.onerror=e=>{setStatus('tr-status','錯誤：'+e.error);stopTr()};
+  trRec.onend=()=>{if(isTr)trRec.start()};
+  trRec.start();
+}
+function stopTr(){
+  isTr=false;if(trRec)trRec.stop();clearInterval(trTmr);
+  gl('tr-btn').innerHTML='<i class="ti ti-record-mail"></i> 開始錄音轉寫';
+  gl('tr-btn').classList.remove('recording');gl('tr-wave').style.display='none';
+  setStatus('tr-status','錄音完成 ✓');
+}
+
+// ── SUMMARY ───────────────────────────────────────────
+function toggleSRec(){
+  if(isS){stopSR();return}
+  var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){setStatus('s-status','請使用 Chrome');return}
+  sRec=new SR();sRec.lang=gl('s-lang').value;sRec.continuous=true;sRec.interimResults=false;sTxt='';
+  sRec.onstart=()=>{isS=true;gl('s-btn').innerHTML='<i class="ti ti-square"></i> 停止錄音';gl('s-btn').classList.add('recording');gl('s-wave').style.display='flex';setStatus('s-status','錄音中...')};
+  sRec.onresult=e=>{for(var i=e.resultIndex;i<e.results.length;i++)if(e.results[i].isFinal)sTxt+=e.results[i][0].transcript+' ';gl('s-raw').value=sTxt;};
+  sRec.onerror=e=>{setStatus('s-status','錯誤：'+e.error)};
+  sRec.onend=()=>{if(isS)sRec.start()};sRec.start();
+}
+function stopSR(){
+  isS=false;if(sRec)sRec.stop();
+  gl('s-btn').innerHTML='<i class="ti ti-microphone"></i> 開始錄音';
+  gl('s-btn').classList.remove('recording');gl('s-wave').style.display='none';
+  setStatus('s-status','錄音完成，點擊「生成摘要」');
+}
+function doSummary(){
+  var text=gl('s-raw').value||sTxt;if(!text.trim()){setStatus('s-status','請先錄音或輸入文字');return}
+  var sents=text.split(/[。！？.!?]+/).filter(s=>s.trim().length>3);
+  var wm={};text.split(/[\s，,、。！？.!?；;：:]+/).forEach(w=>{if(w.length>1)wm[w]=(wm[w]||0)+1});
+  var kws=Object.keys(wm).sort((a,b)=>wm[b]-wm[a]).slice(0,8);
+  var picks=sents.slice(0,Math.min(3,sents.length));
+  if(sents.length>5)picks=picks.concat(sents.slice(-2));
+  var out='【內容摘要】\n\n關鍵詞：'+kws.join('、')+'\n\n重點：\n'+picks.map((s,i)=>(i+1)+'. '+s.trim()+'。').join('\n')+'\n\n共 '+sents.length+' 句 · '+text.replace(/\s/g,'').length+' 字';
+  var ss=gl('s-summary');ss.textContent=out;ss.classList.remove('result-placeholder');
+  gl('m-chars').textContent=text.replace(/\s/g,'').length;
+  gl('m-sents').textContent=sents.length;gl('m-kws').textContent=kws.length;
+  gl('s-metrics').style.display='grid';setStatus('s-status','摘要完成 ✓');
+}
+function doKeywords(){
+  var text=gl('s-raw').value||sTxt;if(!text.trim())return;
+  var wm={};text.split(/[\s，,、。！？.!?；;]+/).forEach(w=>{if(w.length>1)wm[w]=(wm[w]||0)+1});
+  var kws=Object.keys(wm).sort((a,b)=>wm[b]-wm[a]).slice(0,15);
+  gl('s-kw').style.display='flex';
+  gl('s-kw').innerHTML=kws.map(k=>'<span class="kw">'+k+' ('+wm[k]+')</span>').join('');
+}
+
+// ── FLOAT ─────────────────────────────────────────────
+function doFloat(){
+  var sel=window.getSelection?window.getSelection().toString():'';
+  if(!sel||sel.length<2){sel=gl('f-sample').textContent.substring(0,80)}
+  var src=gl('f-src').value,tgt=gl('f-tgt').value;
+  gl('f-box').style.display='block';
+  gl('f-src-txt').textContent=sel.length>70?sel.substring(0,70)+'...':sel;
+  gl('f-result').textContent='翻譯中...';
+  txAPI(sel,src,tgt,r=>{
+    gl('f-result').textContent=r;
+    if(isOn('f-autospeak'))speakText(r,tgt);
+  });
+}
+function toggleFGlobal(){togEl('f-global');fGlobal=isOn('f-global');
+  if(fGlobal){document.addEventListener('mouseup',onFG);document.addEventListener('touchend',onFG);setStatus('f-status','全域模式已啟用，選取文字即可翻譯')}
+  else{document.removeEventListener('mouseup',onFG);document.removeEventListener('touchend',onFG);setStatus('f-status','全域模式已關閉')}
+}
+function onFG(){
+  setTimeout(()=>{var s=window.getSelection?window.getSelection().toString():'';if(s&&s.trim().length>2)doFloat();},100);
+}
+
+// ── HISTORY ───────────────────────────────────────────
+function renderH(){
+  var q=(gl('h-search').value||'').toLowerCase();
+  var list=H.filter(h=>(hFilter!=='fav'||h.fav)&&(!q||(h.src+h.tgt).toLowerCase().includes(q)));
+  gl('h-count').textContent=list.length+' 筆記錄';
+  if(!list.length){gl('h-list').innerHTML='<p style="font-size:13px;color:var(--text3);text-align:center;padding:20px">無記錄</p>';return}
+  gl('h-list').innerHTML=list.map(h=>`
+    <div class="h-item">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span class="h-tag"><i class="ti ti-language" style="font-size:11px"></i> ${h.sl} → ${h.tl}</span>
+        <div style="display:flex;align-items:center;gap:4px">
+          <span style="font-size:11px;color:var(--text3)">${h.time}</span>
+          <button class="star ${h.fav?'on':''}" onclick="toggleFav(${h.id})"><i class="ti ti-star" style="font-size:14px"></i></button>
+          <button class="star" onclick="navigator.clipboard.writeText('${h.tgt.replace(/'/g,"\\'")}').then(()=>showToast('已複製'))"><i class="ti ti-copy" style="font-size:13px"></i></button>
+        </div>
+      </div>
+      <div class="h-orig">${escHtml(h.src.substring(0,80))}</div>
+      <div class="h-trans">${escHtml(h.tgt.substring(0,80))}</div>
+    </div>`).join('');
+}
+function toggleFav(id){var h=H.find(x=>x.id===id);if(h){h.fav=!h.fav;renderH();showToast(h.fav?'已加入收藏':'已取消收藏')}}
+function setHFilter(f){
+  hFilter=f;
+  ['all','fav'].forEach(k=>{var e=gl('hf-'+k);if(e)e.classList.toggle('active',k===f)});
+  renderH();
+}
+function clearH(){if(!confirm('確定清除所有記錄？'))return;H=[];renderH()}
+function exportH(){
+  var txt=H.map(h=>h.time+' ['+h.sl+' → '+h.tl+']\n'+h.src+'\n→ '+h.tgt).join('\n\n');
+  var a=document.createElement('a');a.href='data:text/plain;charset=utf-8,'+encodeURIComponent(txt);a.download='translation-history.txt';a.click();
+}
+
+// ── SPEAK HELPER ──────────────────────────────────────
+function speakText(text,lang){
+  var spd=parseFloat((gl('cfg-speed')||{value:'1'}).value)||1;
+  var u=new SpeechSynthesisUtterance(text);u.lang=lang;u.rate=spd;
+  speechSynthesis.cancel();speechSynthesis.speak(u);
+}
+
+// ── PWA INSTALL ───────────────────────────────────────
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();deferredPrompt=e;
+  gl('install-banner').style.display='flex';
+});
+gl('install-btn').addEventListener('click',()=>{
+  if(!deferredPrompt)return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(r=>{
+    if(r.outcome==='accepted')showToast('安裝成功！');
+    deferredPrompt=null;gl('install-banner').style.display='none';
+  });
+});
+window.addEventListener('appinstalled',()=>{gl('install-banner').style.display='none';showToast('已安裝到主畫面')});
+
+// ── SERVICE WORKER ────────────────────────────────────
+if('serviceWorker'in navigator){
+  navigator.serviceWorker.register('sw.js').then(reg=>{
+    gl('pwa-status').textContent='已啟用（可離線使用）';
+    gl('pwa-status').style.color='var(--success)';
+  }).catch(()=>{gl('pwa-status').textContent='未啟用'});
+}
+
+// ── OFFLINE DETECTION ─────────────────────────────────
+function updateOnline(){gl('offline-banner').style.display=navigator.onLine?'none':'block'}
+window.addEventListener('online',updateOnline);window.addEventListener('offline',updateOnline);updateOnline();
+
+// ── URL PARAM ─────────────────────────────────────────
+(function(){
+  var p=new URLSearchParams(location.search).get('tab');
+  if(p)switchTab(p);
+})();
+
+// ── GENERATE ICONS ────────────────────────────────────
+(function generateIcons(){
+  ['192','512'].forEach(size=>{
+    var c=document.createElement('canvas');c.width=parseInt(size);c.height=parseInt(size);
+    var ctx=c.getContext('2d');var s=parseInt(size);
+    ctx.fillStyle='#378ADD';ctx.beginPath();ctx.roundRect(0,0,s,s,s*0.2);ctx.fill();
+    ctx.fillStyle='#ffffff';ctx.font='bold '+(s*0.45)+'px Arial';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('譯',s/2,s/2);
+    var link=document.createElement('link');link.rel='apple-touch-icon';link.href=c.toDataURL();document.head.appendChild(link);
+  });
+})();
+</script>
+</body>
+</html>
