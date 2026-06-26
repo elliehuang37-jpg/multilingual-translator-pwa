@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "translator-pwa",
+      "runtimeExecutable": "powershell",
+      "runtimeArgs": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "C:\\Users\\Ellie\\Desktop\\Claude\\multilingual-translator-pwa\\server.ps1"],
+      "port": 8765
+    }
+  ]
+}
